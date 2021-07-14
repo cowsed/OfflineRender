@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"math"
+	"math/rand"
 	"sync"
 
 	m "github.com/go-gl/mathgl/mgl64"
@@ -22,16 +23,17 @@ func MakeImage(img *image.RGBA, width, height int, scene *Scene) {
 			}(r, c)
 
 		}
-
 	}
 
 	wg.Wait()
 }
 
 func FillBlock(scene *Scene, startx, starty, width, height int, img *image.RGBA) {
+	//New Source of random numbers to avoid locking times
+	rander := rand.New(rand.NewSource(int64(startx*width + starty)))
 	for x := startx; x < minI(startx+BlockSize, width); x++ {
 		for y := starty; y < minI(starty+BlockSize, height); y++ {
-			c := MakePixel(scene, x, y, width, height)
+			c := MakePixel(scene, x, y, width, height, rander)
 
 			img.SetRGBA(x, y, V32RGBA(c))
 
@@ -39,25 +41,36 @@ func FillBlock(scene *Scene, startx, starty, width, height int, img *image.RGBA)
 	}
 }
 
-func MakePixel(scene *Scene, x, y, width, height int) m.Vec3 {
+func MakePixel(scene *Scene, x, y, width, height int, rander *rand.Rand) m.Vec3 {
 
-	uv := m.Vec2{}
-	uv[0] = (float64(x) / float64(width))
-	uv[1] = float64(y) / float64(height)
+	fullColor := m.Vec3{}
 
-	c := lerpColor(m.Vec3{.5, .7, 1.0}, m.Vec3{1.0, 1.0, 1.0}, uv.Y())
-	//uv = uv.Mul(2).Sub(mgl64.Vec2{1, 1})
+	//for X := -.5; X < .5; X += 1 / float64(MSAA) {
+	//	for Y := -.5; Y < .5; Y += 1 / float64(MSAA) {
+	for sample := 0; sample < SamplePerPixel; sample++ {
 
-	var r = scene.Cam.GetRay(uv)
+		uv := m.Vec2{}
+		uv[0] = (float64(x) + rander.Float64()) / float64(width)
+		uv[1] = (float64(y) + rander.Float64()) / float64(height)
 
-	c = colorRay(r, scene, MaxDepth)
-	c = m.Vec3{
-		math.Pow(c.X(), Gamma),
-		math.Pow(c.Y(), Gamma),
-		math.Pow(c.Z(), Gamma),
+		c := lerpColor(m.Vec3{.5, .7, 1.0}, m.Vec3{1.0, 1.0, 1.0}, uv.Y())
+
+		var r = scene.Cam.GetRay(uv)
+
+		c = colorRay(r, scene, MaxDepth)
+
+		fullColor = fullColor.Add(c)
 	}
-
-	return c
+	//		}
+	//}
+	//fullColor = fullColor.Mul(1.0 / float64(MSAA*MSAA))
+	fullColor = fullColor.Mul(1.0 / SamplePerPixel)
+	fullColor = m.Vec3{
+		math.Pow(fullColor.X(), Gamma),
+		math.Pow(fullColor.Y(), Gamma),
+		math.Pow(fullColor.Z(), Gamma),
+	}
+	return fullColor
 }
 
 func colorRay(r Ray, scene *Scene, depth int) m.Vec3 {

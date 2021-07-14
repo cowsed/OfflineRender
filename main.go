@@ -5,8 +5,10 @@ import (
 	"image"
 	"image/png"
 	"math"
+	"math/rand"
 	"os"
 	"runtime/pprof"
+	"time"
 
 	m "github.com/go-gl/mathgl/mgl64"
 	//	"image/color"
@@ -20,6 +22,8 @@ const (
 	ImageWidth  = 1920
 	ImageHeight = 1080
 	NumFrames   = 1
+	//MSAA           = 1
+	SamplePerPixel = 60
 )
 
 //Render Settings
@@ -30,12 +34,14 @@ const (
 
 //uv is [-1,1] and  [-1,1]
 func main() {
+	//Consistency
+	rand.Seed(0)
 
 	l, _ := os.Create("CPU2.pprof")
 	pprof.StartCPUProfile(l)
 
 	for Frame := 0; Frame < NumFrames; Frame++ {
-		//initTime := time.Now()
+		initTime := time.Now()
 		fmt.Printf("Beginning Frame %d...", Frame)
 		Time := float64(Frame) / float64(NumFrames)
 		img := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
@@ -97,7 +103,7 @@ func main() {
 
 		err = f.Close()
 		check(err)
-		fmt.Println("Finished")
+		fmt.Println("Finished in", time.Since(initTime))
 	}
 	pprof.StopCPUProfile()
 	l.Close()
