@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"math/rand"
@@ -13,9 +14,11 @@ func MakeImage(img *image.RGBA, width, height int, scene *Scene) {
 
 	//Do the rendering
 	var wg sync.WaitGroup
+	NumRoutines := 0
 	for r := 0; r < height; r += BlockSize {
 		for c := 0; c < width; c += BlockSize {
 			wg.Add(1)
+			NumRoutines++
 			go func(r1, c1 int) {
 				FillBlock(scene, c1, r1, width, height, img)
 				wg.Done()
@@ -24,7 +27,7 @@ func MakeImage(img *image.RGBA, width, height int, scene *Scene) {
 
 		}
 	}
-
+	fmt.Printf("Using %d goroutines \n", NumRoutines)
 	wg.Wait()
 }
 
@@ -57,7 +60,7 @@ func MakePixel(scene *Scene, x, y, width, height int, rander *rand.Rand) m.Vec3 
 
 		var r = scene.Cam.GetRay(uv)
 
-		c = colorRay(r, scene, MaxDepth)
+		c = colorRay(r, scene, rander, MaxDepth)
 
 		fullColor = fullColor.Add(c)
 	}
@@ -73,29 +76,33 @@ func MakePixel(scene *Scene, x, y, width, height int, rander *rand.Rand) m.Vec3 
 	return fullColor
 }
 
-func colorRay(r Ray, scene *Scene, depth int) m.Vec3 {
-	if depth == 0 {
+func colorRay(r Ray, scene *Scene, rander *rand.Rand, depth int) m.Vec3 {
+	if depth <= 0 {
 		return m.Vec3{}
 	}
 	var c m.Vec3
 
-	t, p, N, intersector := IntersectScene(r, scene)
+	t, p, N, intersector := IntersectScene(r, scene, 0.001)
 	//Hit Nothing, sky color
 	if intersector == nil {
-		c = lerpColor(m.Vec3{.5, .7, 1.0}, m.Vec3{1.0, 1.0, 1.0}, r.Dir.Normalize().Y())
+		c = lerpColor(m.Vec3{.6, .75, 1.0}, m.Vec3{1.0, 1.0, 1.0}, r.Dir.Normalize().Y())
 		return c
 	}
+	//Color by material
 	if t >= 0 {
 
-		c = scene.Materials[intersector.MaterialIndex].Color
+		//newDir := reflect(r.Dir, N)
+		SInfo := scene.Materials[intersector.MaterialIndex].Scatter(N, rander)
+		c = SInfo.Color
 
-		newDir := reflect(r.Dir, N)
 		newR := Ray{
 			Origin: p,
-			Dir:    newDir,
+			Dir:    SInfo.NewRayDir,
 		}
-		c2 := colorRay(newR, scene, depth-1)
-		c = c.Mul(.5).Add(c2.Mul(.5))
+
+		c = colorRay(newR, scene, rander, depth-1).Mul(SInfo.Attenuation)
+		c = Mul3x3(SInfo.Color, c)
+		//c = c.Mul(.5).Add(colorRay(newR, scene, rander, depth-1).Mul(.5)).Mul(.5)
 	}
 	return c
 

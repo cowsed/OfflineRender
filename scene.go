@@ -20,15 +20,15 @@ type Sphere struct {
 	MaterialIndex int
 }
 
-func IntersectScene(r Ray, scene *Scene) (float64, m.Vec3, m.Vec3, *Sphere) {
-
+func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Vec3, *Sphere) {
+	
 	var intersector *Sphere = nil
 	var intersectNormal m.Vec3
 	var shortestDist float64 = MAXDIST
 	for i := range scene.Geometry {
 		//scene[i]
 		t := IntersectSphere(scene.Geometry[i].Center, scene.Geometry[i].Radius, r)
-		if t < shortestDist && t >= 0 {
+		if t < shortestDist && t >= MinDist {
 			intersector = &scene.Geometry[i]
 
 			intersectNormal = (r.At(t).Sub(scene.Geometry[i].Center)).Normalize()

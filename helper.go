@@ -3,9 +3,47 @@ package main
 import (
 	"image/color"
 	"math"
+	"math/rand"
 
 	"github.com/go-gl/mathgl/mgl64"
 )
+
+func Mul3x3(a, b mgl64.Vec3) mgl64.Vec3 {
+	return mgl64.Vec3{
+		a[0]*b[0],
+		a[1]*b[1],
+		a[2]*b[2],
+	}
+}
+
+func RandomVec3(rander *rand.Rand) mgl64.Vec3 {
+	return mgl64.Vec3{
+		rander.Float64()*2 - 1,
+		rander.Float64()*2 - 1,
+		rander.Float64()*2 - 1,
+	}
+}
+
+func RandomVec3InUnitSphere(rander *rand.Rand) mgl64.Vec3{
+	for{
+        var p = RandomVec3(rander);
+        if (p.LenSqr() >= 1){ 
+			continue
+			};
+        return p;
+    }
+}
+func RandomUnitVec3(rander *rand.Rand) mgl64.Vec3 {
+	return RandomVec3InUnitSphere(rander).Normalize()
+}
+
+
+func minI(a, b int) int {
+	if a < b {
+		return a
+	}
+	return a
+}
 
 //Vector to color functions
 func V22RGBA(v mgl64.Vec2) color.RGBA {

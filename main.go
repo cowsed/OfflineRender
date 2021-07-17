@@ -16,20 +16,19 @@ import (
 	_ "net/http/pprof"
 )
 
-//Renderring Settings
+//Image and Renderring Settings
 const (
-	BlockSize   = 256
+	BlockSize   = 64
 	ImageWidth  = 1920
 	ImageHeight = 1080
 	NumFrames   = 1
-	//MSAA           = 1
 	SamplePerPixel = 60
 )
 
 //Render Settings
 const (
 	MaxDepth = 60
-	Gamma    = 1
+	Gamma    = .5
 )
 
 //uv is [-1,1] and  [-1,1]
@@ -56,36 +55,43 @@ func main() {
 		MainCam.Init()
 
 		materials := []Material{
-			{
-				Color: m.Vec3{.5, 0, 1},
+			Diffuse{
+				Albedo:      m.Vec3{.5, 0.1, 1},
+				Reflectance: .9,
 			},
-			{
-				Color: m.Vec3{.6, 0, .2},
+			Diffuse{
+				Albedo:      m.Vec3{1, 0.1, .5},
+				Reflectance: .9,
 			},
-			{
-				Color: m.Vec3{.1, .6, .2},
+			Diffuse{
+				Albedo:      m.Vec3{.1, 1, 0.1},
+				Reflectance: .8,
+			},
+			Diffuse{
+				Albedo:      m.Vec3{1, 1, 1},
+				Reflectance: .5,
 			},
 		}
 		spheres := []Sphere{
 			{
-				Center:        m.Vec3{-1, 0, 3 - math.Sin(2*math.Pi*Time)/2},
+				Center:        m.Vec3{-2.05, 0, 3 - math.Sin(2*math.Pi*Time)/2},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
 			{
-				Center:        m.Vec3{math.Sin(Time * 2 * math.Pi), -2, 3},
+				Center:        m.Vec3{math.Sin(Time * 2 * math.Pi), 0, 3},
 				Radius:        1,
 				MaterialIndex: 1,
 			},
 			{
-				Center:        m.Vec3{1, 0, 3 + math.Sin(2*math.Pi*Time)/2},
+				Center:        m.Vec3{2.05, 0, 3 + math.Sin(2*math.Pi*Time)/2},
 				Radius:        1,
 				MaterialIndex: 2,
 			},
 			{
-				Center:        m.Vec3{0, 2000, 0},
-				Radius:        1999,
-				MaterialIndex: 1,
+				Center:        m.Vec3{0, 20000, 0},
+				Radius:        19999,
+				MaterialIndex: 3,
 			},
 		}
 		MainScene := Scene{
@@ -107,6 +113,18 @@ func main() {
 	}
 	pprof.StopCPUProfile()
 	l.Close()
+
+	/*
+		f, err := os.Create("mem.pprof")
+		if err != nil {
+			log.Fatal("could not create memory profile: ", err)
+		}
+		defer f.Close() // error handling omitted for example
+		runtime.GC()    // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Fatal("could not write memory profile: ", err)
+		}
+	*/
 }
 
 //Assorted helper functions
@@ -114,10 +132,4 @@ func check(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-func minI(a, b int) int {
-	if a < b {
-		return a
-	}
-	return a
 }
