@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"image/png"
-	"math"
 	"math/rand"
 	"os"
 	"runtime/pprof"
@@ -22,7 +21,7 @@ const (
 	ImageWidth     = 1920 / 2
 	ImageHeight    = 1080 / 2
 	NumFrames      = 1
-	SamplePerPixel = 8
+	SamplePerPixel = 1400
 )
 
 //Render Settings
@@ -42,7 +41,7 @@ func main() {
 	for Frame := 0; Frame < NumFrames; Frame++ {
 		initTime := time.Now()
 		fmt.Printf("Beginning Frame %d...", Frame)
-		Time := float64(Frame) / float64(NumFrames)
+		//Time := float64(Frame) / float64(NumFrames)
 		img := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
 
 		//Setup rendering things
@@ -59,50 +58,79 @@ func main() {
 			Metal{
 				Albedo:      m.Vec3{.5, 0.5, .5},
 				Reflectance: 1,
-				Fuzziness:   .2,
+				Fuzziness:   0,
 			},
 			//Gold
 			Metal{
 				Albedo:      m.Vec3{0.72, 0.53, 0.04},
 				Reflectance: .6,
-				Fuzziness:   .05,
+				Fuzziness:   .2,
 			},
 			//Bronze
-			Metal{
-				Albedo:      m.Vec3{.8, .5, .2},
-				Reflectance: .6,
-				Fuzziness:   .7,
-			},
 			Diffuse{
 				Albedo:      m.Vec3{1, 1, 1},
 				Attenuation: 1,
+				//Fuzziness:   .7,
+			},
+			//Floor
+			Diffuse{
+				Albedo:      m.Vec3{.9, .9, .9},
+				Attenuation: .8,
 			},
 		}
-		spheres := []Sphere{
-			{
-				Center:        m.Vec3{-1.55, 0, 3 - 0*math.Sin(2*math.Pi*Time)/2},
+		intersectors := []Intersector{
+			Sphere{
+				Center:        m.Vec3{-.3, 0, 3.7},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
-			{
-				Center:        m.Vec3{0, -.8, 4.2},
-				Radius:        1,
-				MaterialIndex: 1,
-			},
-			{
-				Center:        m.Vec3{1.55, 0, 3 + 0*math.Sin(2*math.Pi*Time)/2},
-				Radius:        1,
-				MaterialIndex: 2,
-			},
-			{
+			//Sphere{
+			//	Center:        m.Vec3{0, .5, 2.4},
+			//	Radius:        .5,
+			//	MaterialIndex: 1,
+			//},
+			//Sphere{
+			//	Center:        m.Vec3{1.55, 0, 3},
+			//	Radius:        1,
+			//	MaterialIndex: 2,
+			//},
+			Sphere{
 				Center:        m.Vec3{0, 20000, 0},
 				Radius:        19999,
 				MaterialIndex: 3,
 			},
 		}
+
+		rander := rand.New(rand.NewSource(1))
+		for i := 0; i < 10; i++ {
+			p := RandomVec3InUnitSphere(rander)
+			p[1] = 0
+			if p.Len() < .5 {
+				i--
+				continue
+			}
+
+			p = p.Mul(-2.2)
+			p[1] = .8
+
+			p = p.Add(m.Vec3{0, 0, 3.8})
+			fmt.Println("NewSphere", p)
+			ns := Sphere{
+				Center:        p,
+				Radius:        .2,
+				MaterialIndex: len(materials),
+			}
+			materials = append(materials, Diffuse{
+				Albedo:      RandomVec3InUnitSphere(rander),
+				Attenuation: .9,
+			})
+			intersectors = append(intersectors, ns)
+		}
+
 		MainScene := Scene{
+			Env:       SimpleEnv{m.Vec3{.2, .5, 1}, m.Vec3{1, 1, 1}},
 			Cam:       MainCam,
-			Geometry:  spheres,
+			Geometry:  intersectors,
 			Materials: materials,
 		}
 		MakeImage(img, ImageWidth, ImageHeight, &MainScene)

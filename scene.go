@@ -9,29 +9,44 @@ import (
 const MAXDIST float64 = 10000000000
 
 type Scene struct {
+	Env       Environment
 	Cam       Camera
-	Geometry  []Sphere
+	Geometry  []Intersector
 	Materials []Material
 }
 
-type Sphere struct {
-	Center        m.Vec3
-	Radius        float64
-	MaterialIndex int
+type Environment interface {
+	At(Dir m.Vec3) m.Vec3
 }
 
-func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Vec3, *Sphere) {
+type SimpleEnv struct {
+	col1, col2 m.Vec3
+}
 
-	var intersector *Sphere = nil
+func (s SimpleEnv) At(Dir m.Vec3) m.Vec3 {
+
+	return lerpColor(s.col1, s.col2, Dir.Normalize().Y()/2+.5)
+
+}
+
+type Intersector interface {
+	Intersect(r Ray) float64
+	Normal(pos m.Vec3) m.Vec3
+	Material() int
+}
+
+func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Vec3, *Intersector) {
+
+	var intersector *Intersector = nil
 	var intersectNormal m.Vec3
 	var shortestDist float64 = MAXDIST
 	for i := range scene.Geometry {
 		//scene[i]
-		t := IntersectSphere(scene.Geometry[i].Center, scene.Geometry[i].Radius, r)
+		t := scene.Geometry[i].Intersect(r)
 		if t < shortestDist && t >= MinDist {
 			intersector = &scene.Geometry[i]
 
-			intersectNormal = (r.At(t).Sub(scene.Geometry[i].Center)).Normalize()
+			intersectNormal = (*intersector).Normal(r.At(t))
 
 			shortestDist = t
 		}
@@ -40,11 +55,17 @@ func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Ve
 
 }
 
-func IntersectSphere(center m.Vec3, radius float64, r Ray) float64 {
-	var oc = r.Origin.Sub(center)
+type Sphere struct {
+	Center        m.Vec3
+	Radius        float64
+	MaterialIndex int
+}
+
+func (s Sphere) Intersect(r Ray) float64 {
+	var oc = r.Origin.Sub(s.Center)
 	a := r.Dir.LenSqr()
 	half_b := oc.Dot(r.Dir)
-	c := oc.LenSqr() - radius*radius
+	c := oc.LenSqr() - s.Radius*s.Radius
 	discriminant := half_b*half_b - a*c
 
 	if discriminant < 0 {
@@ -53,4 +74,12 @@ func IntersectSphere(center m.Vec3, radius float64, r Ray) float64 {
 		return (-half_b - math.Sqrt(discriminant)) / a
 	}
 
+}
+
+func (s Sphere) Normal(pos m.Vec3) m.Vec3 {
+	return pos.Sub(s.Center).Normalize()
+}
+
+func (s Sphere) Material() int {
+	return s.MaterialIndex
 }
