@@ -16,11 +16,11 @@ import (
 
 //Image and Renderring Settings
 const (
-	BlockSize      = 32
-	ImageWidth     = 1920 
-	ImageHeight    = 1080 
+	BlockSize      = 16
+	ImageWidth     = 1920 / 2
+	ImageHeight    = 1080 / 2
 	NumFrames      = 1
-	SamplePerPixel = 240
+	SamplePerPixel = 480
 )
 
 //Render Settings
@@ -70,11 +70,11 @@ func main() {
 			Metal{
 				Albedo:      m.Vec3{0.72, 0.53, 0.04},
 				Reflectance: .6,
-				Fuzziness:   .2,
+				Fuzziness:   0,
 			},
 			//Bronze
 			Diffuse{
-				Albedo:      m.Vec3{1, 1, 1},
+				Albedo:      m.Vec3{.9, .4, .2},
 				Attenuation: 1,
 				//Fuzziness:   .7,
 			},
@@ -84,6 +84,11 @@ func main() {
 				Attenuation: .8,
 			},
 		}
+		model1 := CreateModelFromSTL("TestResources/test.stl")
+		model1.Position = m.Vec3{-0, -1, 3}
+		model1.MaterialIndex = 2
+		model1.Setup()
+
 		intersectors := []Intersector{
 			Sphere{
 				Center:        m.Vec3{-1.55, 0, 3},
@@ -98,13 +103,14 @@ func main() {
 			Sphere{
 				Center:        m.Vec3{1.55, 0, 3},
 				Radius:        1,
-				MaterialIndex: 2,
+				MaterialIndex: 0,
 			},
 			Sphere{
 				Center:        m.Vec3{0, 20000, 0},
 				Radius:        19999,
 				MaterialIndex: 3,
 			},
+			model1,
 		}
 
 		MainScene := Scene{

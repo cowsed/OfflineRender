@@ -56,7 +56,7 @@ func MakePixel(scene *Scene, x, y, width, height int, rander *rand.Rand) m.Vec3 
 		uv[0] = (float64(x) + rander.Float64()) / float64(width)
 		uv[1] = (float64(y) + rander.Float64()) / float64(height)
 
-		c := lerpColor(m.Vec3{.5, .7, 1.0}, m.Vec3{1.0, 1.0, 1.0}, uv.Y())
+		var c m.Vec3
 
 		var r = scene.Cam.GetRay(uv)
 

@@ -13,6 +13,7 @@ import (
 )
 
 const MAXDIST float64 = 10000000000
+const MINDIST float64 = 1e-8
 
 type Scene struct {
 	Env       Environment
@@ -62,12 +63,6 @@ func (h *HDRIEnv) At(Dir m.Vec3) m.Vec3 {
 	return RGBA2V3(c)
 }
 
-type Intersector interface {
-	Intersect(r Ray) float64
-	Normal(pos m.Vec3) m.Vec3
-	Material() int
-}
-
 func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Vec3, *Intersector) {
 
 	var intersector *Intersector = nil
@@ -75,44 +70,15 @@ func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Ve
 	var shortestDist float64 = MAXDIST
 	for i := range scene.Geometry {
 		//scene[i]
-		t := scene.Geometry[i].Intersect(r)
+		t, N := scene.Geometry[i].Intersect(r)
 		if t < shortestDist && t >= MinDist {
 			intersector = &scene.Geometry[i]
 
-			intersectNormal = (*intersector).Normal(r.At(t))
+			intersectNormal = N
 
 			shortestDist = t
 		}
 	}
 	return shortestDist, r.At(shortestDist), intersectNormal, intersector
 
-}
-
-type Sphere struct {
-	Center        m.Vec3
-	Radius        float64
-	MaterialIndex int
-}
-
-func (s Sphere) Intersect(r Ray) float64 {
-	var oc = r.Origin.Sub(s.Center)
-	a := r.Dir.LenSqr()
-	half_b := oc.Dot(r.Dir)
-	c := oc.LenSqr() - s.Radius*s.Radius
-	discriminant := half_b*half_b - a*c
-
-	if discriminant < 0 {
-		return -1.0
-	} else {
-		return (-half_b - math.Sqrt(discriminant)) / a
-	}
-
-}
-
-func (s Sphere) Normal(pos m.Vec3) m.Vec3 {
-	return pos.Sub(s.Center).Normalize()
-}
-
-func (s Sphere) Material() int {
-	return s.MaterialIndex
 }
