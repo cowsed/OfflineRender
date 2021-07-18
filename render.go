@@ -85,15 +85,14 @@ func colorRay(r Ray, scene *Scene, rander *rand.Rand, depth int) m.Vec3 {
 	t, p, N, intersector := IntersectScene(r, scene, 0.001)
 	//Hit Nothing, sky color
 	if intersector == nil {
-		c = lerpColor(m.Vec3{.6, .75, 1.0}, m.Vec3{1.0, 1.0, 1.0}, r.Dir.Normalize().Y())
+		c = lerpColor(m.Vec3{1, 1, 1.0}, m.Vec3{1.0, 1.0, 1.0}, r.Dir.Normalize().Y())
 		return c
 	}
 	//Color by material
 	if t >= 0 {
 
 		//newDir := reflect(r.Dir, N)
-		SInfo := scene.Materials[intersector.MaterialIndex].Scatter(N, rander)
-		c = SInfo.Color
+		SInfo := scene.Materials[intersector.MaterialIndex].Scatter(r, N, rander)
 
 		newR := Ray{
 			Origin: p,

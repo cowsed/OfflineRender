@@ -21,7 +21,7 @@ type Sphere struct {
 }
 
 func IntersectScene(r Ray, scene *Scene, MinDist float64) (float64, m.Vec3, m.Vec3, *Sphere) {
-	
+
 	var intersector *Sphere = nil
 	var intersectNormal m.Vec3
 	var shortestDist float64 = MAXDIST

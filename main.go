@@ -18,22 +18,22 @@ import (
 
 //Image and Renderring Settings
 const (
-	BlockSize   = 64
-	ImageWidth  = 1920
-	ImageHeight = 1080
-	NumFrames   = 1
-	SamplePerPixel = 60
+	BlockSize      = 128
+	ImageWidth     = 1920 / 2
+	ImageHeight    = 1080 / 2
+	NumFrames      = 1
+	SamplePerPixel = 8
 )
 
 //Render Settings
 const (
-	MaxDepth = 60
+	MaxDepth = 48
 	Gamma    = .5
 )
 
 //uv is [-1,1] and  [-1,1]
 func main() {
-	//Consistency
+	//Consistency across runs for easier debugging
 	rand.Seed(0)
 
 	l, _ := os.Create("CPU2.pprof")
@@ -55,36 +55,42 @@ func main() {
 		MainCam.Init()
 
 		materials := []Material{
-			Diffuse{
-				Albedo:      m.Vec3{.5, 0.1, 1},
-				Reflectance: .9,
+			//Silver
+			Metal{
+				Albedo:      m.Vec3{.5, 0.5, .5},
+				Reflectance: 1,
+				Fuzziness:   .2,
 			},
-			Diffuse{
-				Albedo:      m.Vec3{1, 0.1, .5},
-				Reflectance: .9,
+			//Gold
+			Metal{
+				Albedo:      m.Vec3{0.72, 0.53, 0.04},
+				Reflectance: .6,
+				Fuzziness:   .05,
 			},
-			Diffuse{
-				Albedo:      m.Vec3{.1, 1, 0.1},
-				Reflectance: .8,
+			//Bronze
+			Metal{
+				Albedo:      m.Vec3{.8, .5, .2},
+				Reflectance: .6,
+				Fuzziness:   .7,
 			},
 			Diffuse{
 				Albedo:      m.Vec3{1, 1, 1},
-				Reflectance: .5,
+				Attenuation: 1,
 			},
 		}
 		spheres := []Sphere{
 			{
-				Center:        m.Vec3{-2.05, 0, 3 - math.Sin(2*math.Pi*Time)/2},
+				Center:        m.Vec3{-1.55, 0, 3 - 0*math.Sin(2*math.Pi*Time)/2},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
 			{
-				Center:        m.Vec3{math.Sin(Time * 2 * math.Pi), 0, 3},
+				Center:        m.Vec3{0, -.8, 4.2},
 				Radius:        1,
 				MaterialIndex: 1,
 			},
 			{
-				Center:        m.Vec3{2.05, 0, 3 + math.Sin(2*math.Pi*Time)/2},
+				Center:        m.Vec3{1.55, 0, 3 + 0*math.Sin(2*math.Pi*Time)/2},
 				Radius:        1,
 				MaterialIndex: 2,
 			},
