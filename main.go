@@ -10,18 +10,17 @@ import (
 	"time"
 
 	m "github.com/go-gl/mathgl/mgl64"
-	//	"image/color"
 
 	_ "net/http/pprof"
 )
 
 //Image and Renderring Settings
 const (
-	BlockSize      = 128
-	ImageWidth     = 1920 / 2
-	ImageHeight    = 1080 / 2
+	BlockSize      = 32
+	ImageWidth     = 1920 
+	ImageHeight    = 1080 
 	NumFrames      = 1
-	SamplePerPixel = 1400
+	SamplePerPixel = 240
 )
 
 //Render Settings
@@ -37,6 +36,13 @@ func main() {
 
 	l, _ := os.Create("CPU2.pprof")
 	pprof.StartCPUProfile(l)
+
+	env := &HDRIEnv{
+		Filename: "TestResources/cannon.jpg",
+		Rotation: .5,
+		image:    &image.RGBA{},
+	}
+	env.LoadImg()
 
 	for Frame := 0; Frame < NumFrames; Frame++ {
 		initTime := time.Now()
@@ -80,20 +86,20 @@ func main() {
 		}
 		intersectors := []Intersector{
 			Sphere{
-				Center:        m.Vec3{-.3, 0, 3.7},
+				Center:        m.Vec3{-1.55, 0, 3},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
-			//Sphere{
-			//	Center:        m.Vec3{0, .5, 2.4},
-			//	Radius:        .5,
-			//	MaterialIndex: 1,
-			//},
-			//Sphere{
-			//	Center:        m.Vec3{1.55, 0, 3},
-			//	Radius:        1,
-			//	MaterialIndex: 2,
-			//},
+			Sphere{
+				Center:        m.Vec3{0, .5, 2.4},
+				Radius:        .5,
+				MaterialIndex: 1,
+			},
+			Sphere{
+				Center:        m.Vec3{1.55, 0, 3},
+				Radius:        1,
+				MaterialIndex: 2,
+			},
 			Sphere{
 				Center:        m.Vec3{0, 20000, 0},
 				Radius:        19999,
@@ -101,34 +107,8 @@ func main() {
 			},
 		}
 
-		rander := rand.New(rand.NewSource(1))
-		for i := 0; i < 10; i++ {
-			p := RandomVec3InUnitSphere(rander)
-			p[1] = 0
-			if p.Len() < .5 {
-				i--
-				continue
-			}
-
-			p = p.Mul(-2.2)
-			p[1] = .8
-
-			p = p.Add(m.Vec3{0, 0, 3.8})
-			fmt.Println("NewSphere", p)
-			ns := Sphere{
-				Center:        p,
-				Radius:        .2,
-				MaterialIndex: len(materials),
-			}
-			materials = append(materials, Diffuse{
-				Albedo:      RandomVec3InUnitSphere(rander),
-				Attenuation: .9,
-			})
-			intersectors = append(intersectors, ns)
-		}
-
 		MainScene := Scene{
-			Env:       SimpleEnv{m.Vec3{.2, .5, 1}, m.Vec3{1, 1, 1}},
+			Env:       env,
 			Cam:       MainCam,
 			Geometry:  intersectors,
 			Materials: materials,
