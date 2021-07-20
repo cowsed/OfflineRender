@@ -85,7 +85,7 @@ func colorRay(r Ray, scene *Scene, rander *rand.Rand, depth int) m.Vec3 {
 	t, p, N, intersector := IntersectScene(r, scene, 0.001)
 	//Hit Nothing, sky color
 	if intersector == nil {
-		
+
 		c = scene.Env.At(r.Dir)
 		return c
 	}

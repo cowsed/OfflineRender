@@ -9,6 +9,10 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
+	"github.com/mdouchement/hdr"
+	_ "github.com/mdouchement/hdr/codec/rgbe"
+	"github.com/mdouchement/hdr/tmo"
+
 	m "github.com/go-gl/mathgl/mgl64"
 )
 
@@ -44,6 +48,20 @@ func (h *HDRIEnv) LoadImg() {
 	f, err := os.Open(h.Filename)
 	check(err)
 	src, _, err := image.Decode(f)
+
+	if hdrm, ok := src.(hdr.Image); ok {
+
+		//t := tmo.NewLinear(hdrm)
+		//t := tmo.NewLogarithmic(hdrm)
+		//t := tmo.NewDefaultDrago03(hdrm)
+		//t := tmo.NewDefaultDurand(hdrm)
+		//t := tmo.NewDefaultCustomReinhard05(hdrm)
+		t := tmo.NewDefaultReinhard05(hdrm)
+		//t := tmo.NewDefaultICam06(hdrm)
+		src = t.Perform()
+
+	}
+
 	check(err)
 	b := src.Bounds()
 	h.image = image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
@@ -60,6 +78,10 @@ func (h *HDRIEnv) At(Dir m.Vec3) m.Vec3 {
 	u = float64(int(u) % h.image.Bounds().Dx())
 	v *= float64(h.image.Bounds().Dy())
 	c := h.image.RGBAAt(int(u), int(v))
+	//c.R = minI8(c.R, 255)
+	//c.G = minI8(c.G, 255)
+	//c.B = minI8(c.B, 255)
+	//c.A = minI8(c.A, 255)
 	return RGBA2V3(c)
 }
 

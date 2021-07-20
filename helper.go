@@ -37,6 +37,12 @@ func RandomUnitVec3(rander *rand.Rand) mgl64.Vec3 {
 	return RandomVec3InUnitSphere(rander).Normalize()
 }
 
+func minI8(a, b uint8) uint8 {
+	if a < b {
+		return a
+	}
+	return a
+}
 func minI(a, b int) int {
 	if a < b {
 		return a
@@ -48,17 +54,17 @@ func minI(a, b int) int {
 func V22RGBA(v mgl64.Vec2) color.RGBA {
 
 	return color.RGBA{
-		uint8(255 * math.Abs(v.X())),
-		uint8(255 * math.Abs(v.Y())),
+		minI8(uint8(255*math.Abs(v.X())), 255),
+		minI8(uint8(255*math.Abs(v.Y())), 255),
 		0,
 		255}
 }
 func V32RGBA(v mgl64.Vec3) color.RGBA {
 
 	return color.RGBA{
-		uint8(float64(255) * math.Abs(v.X())),
-		uint8(float64(255) * math.Abs(v.Y())),
-		uint8(float64(255) * math.Abs(v.Z())),
+		minI8(uint8(float64(255)*math.Abs(v.X())), 255),
+		minI8(uint8(float64(255)*math.Abs(v.Y())), 255),
+		minI8(uint8(float64(255)*math.Abs(v.Z())), 255),
 		255}
 }
 

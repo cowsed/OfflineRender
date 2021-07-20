@@ -16,11 +16,11 @@ import (
 
 //Image and Renderring Settings
 const (
-	BlockSize      = 16
+	BlockSize      = 32
 	ImageWidth     = 1920 / 2
 	ImageHeight    = 1080 / 2
 	NumFrames      = 1
-	SamplePerPixel = 480
+	SamplePerPixel = 48 / 2
 )
 
 //Render Settings
@@ -38,8 +38,8 @@ func main() {
 	pprof.StartCPUProfile(l)
 
 	env := &HDRIEnv{
-		Filename: "TestResources/cannon.jpg",
-		Rotation: .5,
+		Filename: "TestResources/skylit_garage_1k.hdr",
+		Rotation: .8,
 		image:    &image.RGBA{},
 	}
 	env.LoadImg()
@@ -52,7 +52,7 @@ func main() {
 
 		//Setup rendering things
 		var MainCam Camera = Camera{
-			Pos:         m.Vec3{0, -.8, 0},
+			Pos:         m.Vec3{0, -1.5, 0},
 			Rot:         m.Vec3{0, 0, 0},
 			Aspect:      float64(ImageWidth) / float64(ImageHeight),
 			FocalLength: 1.0,
@@ -74,7 +74,7 @@ func main() {
 			},
 			//Bronze
 			Diffuse{
-				Albedo:      m.Vec3{.9, .4, .2},
+				Albedo:      m.Vec3{1, .5, .5},
 				Attenuation: 1,
 				//Fuzziness:   .7,
 			},
@@ -84,32 +84,31 @@ func main() {
 				Attenuation: .8,
 			},
 		}
-		model1 := CreateModelFromSTL("TestResources/test.stl")
-		model1.Position = m.Vec3{-0, -1, 3}
-		model1.MaterialIndex = 2
+		model1 := CreateModelFromSTL("TestResources/cube.stl", m.Vec3{-0, -1, 2.2}, 2)
 		model1.Setup()
+		fmt.Println(model1.bvh.aabb)
 
 		intersectors := []Intersector{
 			Sphere{
-				Center:        m.Vec3{-1.55, 0, 3},
+				Center:        m.Vec3{-1.75, -1, 3},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
+			//Sphere{
+			//	Center:        m.Vec3{0, .5, 2.4},
+			//	Radius:        .5,
+			//	MaterialIndex: 1,
+			//},
 			Sphere{
-				Center:        m.Vec3{0, .5, 2.4},
-				Radius:        .5,
-				MaterialIndex: 1,
-			},
-			Sphere{
-				Center:        m.Vec3{1.55, 0, 3},
+				Center:        m.Vec3{1.75, -1, 3},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
-			Sphere{
-				Center:        m.Vec3{0, 20000, 0},
-				Radius:        19999,
-				MaterialIndex: 3,
-			},
+			//Sphere{
+			//	Center:        m.Vec3{0, 20000, 0},
+			//	Radius:        20000,
+			//	MaterialIndex: 3,
+			//},
 			model1,
 		}
 
