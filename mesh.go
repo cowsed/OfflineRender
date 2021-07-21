@@ -5,6 +5,7 @@ import (
 )
 
 type Model struct {
+	name          string
 	MaterialIndex int
 	Position      m.Vec3
 
@@ -14,7 +15,11 @@ type Model struct {
 	meshBvh MeshBVH
 }
 
-func (mod Model) MakeAABB() AABB {
+func (mod Model) Name() string {
+	return mod.name
+}
+
+func (mod Model) GetAABB() AABB {
 	return mod.meshBvh.aabb
 }
 

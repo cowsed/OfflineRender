@@ -8,6 +8,7 @@ import (
 
 func CreateModelFromSTL(fname string, pos m.Vec3, mat int) Model {
 	mod := Model{}
+	mod.name = fname
 	mod.MaterialIndex = mat
 	mod.meshBvh = MeshBVH{}
 	mod.meshBvh.aabb = AABB{

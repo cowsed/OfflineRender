@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	m "github.com/go-gl/mathgl/mgl64"
@@ -9,13 +10,19 @@ import (
 type Intersector interface {
 	Intersect(r Ray) (float64, m.Vec3, Intersector)
 	Material() int
-	MakeAABB() AABB
+	Name() string
+	GetAABB() AABB
 }
 
 type Sphere struct {
+	name          string
 	Center        m.Vec3
 	Radius        float64
 	MaterialIndex int
+}
+
+func (s Sphere) Name() string {
+	return s.name
 }
 
 func (s Sphere) Intersect(r Ray) (float64, m.Vec3, Intersector) {
@@ -40,7 +47,7 @@ func (s Sphere) Material() int {
 	return s.MaterialIndex
 }
 
-func (s Sphere) MakeAABB() AABB {
+func (s Sphere) GetAABB() AABB {
 	return AABB{
 		Min: s.Center.Sub(m.Vec3{s.Radius, s.Radius, s.Radius}),
 		Max: s.Center.Add(m.Vec3{s.Radius, s.Radius, s.Radius}),
@@ -53,6 +60,9 @@ type Face struct {
 	MaterialIndex int
 }
 
+func (face Face) Name() string {
+	return fmt.Sprint("Face", face.vs)
+}
 func (face Face) Intersect(r Ray) (float64, m.Vec3, Intersector) {
 
 	var EPSILON float64 = 0.0000001
@@ -91,7 +101,7 @@ func (face Face) Intersect(r Ray) (float64, m.Vec3, Intersector) {
 }
 
 //TODO find max and min of all verts
-func (face Face) MakeAABB() AABB {
+func (face Face) GetAABB() AABB {
 	return AABB{}
 }
 

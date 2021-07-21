@@ -46,7 +46,6 @@ func (h *HDRIEnv) LoadImg() {
 		src = t.Perform()
 
 	}
-
 	check(err)
 	b := src.Bounds()
 	h.image = image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))

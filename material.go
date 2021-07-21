@@ -69,7 +69,7 @@ func (e Emmisive) Scatter(inray Ray, Normal m.Vec3, env Environment, rander *ran
 
 	return ScatterInfo{
 		NewRay:      false,
-		Attenuation: 0,
+		Attenuation: 1,
 		NewRayDir:   [3]float64{},
 		Color:       e.Albedo,
 	}

@@ -17,10 +17,10 @@ import (
 //Image and Renderring Settings
 const (
 	BlockSize      = 64
-	ImageWidth     = 1920 //1920 / 20
-	ImageHeight    = 1080 //1080 / 20
+	ImageWidth     = 1920
+	ImageHeight    = 1080
 	NumFrames      = 1
-	SamplePerPixel = 4
+	SamplePerPixel = 16
 )
 
 //Render Settings
@@ -37,7 +37,7 @@ func main() {
 	pprof.StartCPUProfile(l)
 
 	env := &HDRIEnv{
-		Filename: "TestResources/round_platform_4k.hdr",
+		Filename: "TestResources/forest_slope_2k.hdr",
 		Rotation: .2,
 		image:    &image.RGBA{},
 	}
@@ -89,32 +89,36 @@ func main() {
 			},
 			//Floor 2
 			ShadowCatcher{
-				Attenuation: 1,
+				Attenuation: 3,
 			},
 		}
 		//Initialize Geometry
 		//====
-		model1 := CreateModelFromSTL("TestResources/cube.stl", m.Vec3{-0, -1, 2.2}, 2)
+		model1 := CreateModelFromSTL("TestResources/cube.stl", m.Vec3{-0, -.85, 2.2}, 2)
 		model1.Setup()
 		fmt.Println(model1.meshBvh.aabb)
 
 		intersectors := []Intersector{
 			Sphere{
+				name:          "LSphere",
 				Center:        m.Vec3{-1.75, -1, 3},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
-			//Sphere{
-			//	Center:        m.Vec3{0, .5, 2.4},
-			//	Radius:        .5,
-			//	MaterialIndex: 1,
-			//},
 			Sphere{
+				name:          "gold",
+				Center:        m.Vec3{0, -2.4, 2.4},
+				Radius:        .5,
+				MaterialIndex: 1,
+			},
+			Sphere{
+				name:          "RSphere",
 				Center:        m.Vec3{1.75, -1, 3},
 				Radius:        1,
 				MaterialIndex: 0,
 			},
 			Sphere{
+				name:          "ShadowCatcher",
 				Center:        m.Vec3{0, 20000, 0},
 				Radius:        20000,
 				MaterialIndex: 4,
@@ -130,7 +134,8 @@ func main() {
 			Materials: materials,
 		}
 		//Create BVH
-		//MainScene.CreateBVH()
+		MainScene.MakeBVH()
+		PrintBVH(&MainScene.bvh)
 
 		//Render the scene
 		MakeImage(img, ImageWidth, ImageHeight, &MainScene)

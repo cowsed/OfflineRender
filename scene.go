@@ -15,6 +15,7 @@ const MINDIST float64 = 1e-8
 type Scene struct {
 	Env       Environment
 	Cam       Camera
+	bvh       BVH
 	Geometry  []Intersector
 	Materials []Material
 }
