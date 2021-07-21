@@ -13,34 +13,60 @@ import (
 func MakeImage(img *image.RGBA, width, height int, scene *Scene) {
 
 	//Do the rendering
+	var progressChan chan int = make(chan int)
+	var blocksRead = 0
 	var wg sync.WaitGroup
 	NumRoutines := 0
 	for r := 0; r < height; r += BlockSize {
 		for c := 0; c < width; c += BlockSize {
-			wg.Add(1)
-			NumRoutines++
+
 			go func(r1, c1 int) {
 				FillBlock(scene, c1, r1, width, height, img)
+				progressChan <- 1
 				wg.Done()
 				//fmt.Printf("Finished Block %d,%d\n", r1, c1)
 			}(r, c)
+			NumRoutines++
+			wg.Add(1)
 
 		}
 	}
 	fmt.Printf("Using %d goroutines \n", NumRoutines)
+	//for over comm channel and print out results
+	var lastPercent float64 = 0
+	for block := range progressChan {
+		blocksRead += block
+		percent := 100 * (float64(blocksRead) / float64(NumRoutines))
+		if percent-lastPercent > 5 {
+			fmt.Printf("%.1f%%\n", percent)
+			lastPercent = percent
+		}
+		if blocksRead == NumRoutines {
+			close(progressChan)
+			break
+		}
+	}
+
 	wg.Wait()
+
 }
 
 func FillBlock(scene *Scene, startx, starty, width, height int, img *image.RGBA) {
 	//New Source of random numbers to avoid locking times
+	pixelCount := 0
+	var reportEvery int = 51 //every this many pixels send down channel
 	rander := rand.New(rand.NewSource(int64(startx*width + starty)))
 	for x := startx; x < minI(startx+BlockSize, width); x++ {
 		for y := starty; y < minI(starty+BlockSize, height); y++ {
 			c := MakePixel(scene, x, y, width, height, rander)
-
 			img.SetRGBA(x, y, V32RGBA(c))
+			pixelCount++
+			if pixelCount == reportEvery {
+				pixelCount = 0
+			}
 
 		}
+
 	}
 }
 
@@ -82,7 +108,7 @@ func colorRay(r Ray, scene *Scene, rander *rand.Rand, depth int) m.Vec3 {
 	}
 	var c m.Vec3
 
-	t, p, N, intersector := IntersectScene(r, scene, 0.001)
+	t, p, N, intersector := scene.Intersect(r, 0.001)
 	//Hit Nothing, sky color
 	if intersector == nil {
 
@@ -93,7 +119,7 @@ func colorRay(r Ray, scene *Scene, rander *rand.Rand, depth int) m.Vec3 {
 	if t >= 0 {
 
 		//newDir := reflect(r.Dir, N)
-		SInfo := scene.Materials[(*intersector).Material()].Scatter(r, N, rander)
+		SInfo := scene.Materials[intersector.Material()].Scatter(r, N, scene.Env, rander)
 
 		newR := Ray{
 			Origin: p,

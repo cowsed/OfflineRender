@@ -8,8 +8,9 @@ import (
 
 func CreateModelFromSTL(fname string, pos m.Vec3, mat int) Model {
 	mod := Model{}
-	mod.bvh = MeshBVH{}
-	mod.bvh.aabb = AABB{
+	mod.MaterialIndex = mat
+	mod.meshBvh = MeshBVH{}
+	mod.meshBvh.aabb = AABB{
 		Min: [3]float64{MAXDIST, MAXDIST, MAXDIST},
 		Max: [3]float64{-MAXDIST, -MAXDIST, -MAXDIST},
 	}
@@ -32,26 +33,26 @@ func CreateModelFromSTL(fname string, pos m.Vec3, mat int) Model {
 			v = v.Add(pos)
 			//AABB Checking
 			{
-				if v.X() < mod.bvh.aabb.Min.X() {
-					mod.bvh.aabb.Min[0] = v.X()
+				if v.X() < mod.meshBvh.aabb.Min.X() {
+					mod.meshBvh.aabb.Min[0] = v.X()
 				}
-				if v.Y() < mod.bvh.aabb.Min.Y() {
-					mod.bvh.aabb.Min[1] = v.Y()
+				if v.Y() < mod.meshBvh.aabb.Min.Y() {
+					mod.meshBvh.aabb.Min[1] = v.Y()
 				}
-				if v.Z() < mod.bvh.aabb.Min.Z() {
-					mod.bvh.aabb.Min[2] = v.Z()
+				if v.Z() < mod.meshBvh.aabb.Min.Z() {
+					mod.meshBvh.aabb.Min[2] = v.Z()
 				}
-				if v.X() > mod.bvh.aabb.Max.X() {
-					mod.bvh.aabb.Max[0] = v.X()
+				if v.X() > mod.meshBvh.aabb.Max.X() {
+					mod.meshBvh.aabb.Max[0] = v.X()
 				}
-				if v.Y() > mod.bvh.aabb.Max.Y() {
-					mod.bvh.aabb.Max[1] = v.Y()
+				if v.Y() > mod.meshBvh.aabb.Max.Y() {
+					mod.meshBvh.aabb.Max[1] = v.Y()
 				}
-				if v.Z() > mod.bvh.aabb.Min.Z() {
-					mod.bvh.aabb.Max[2] = v.Z()
+				if v.Z() > mod.meshBvh.aabb.Min.Z() {
+					mod.meshBvh.aabb.Max[2] = v.Z()
 				}
 			}
-			
+
 			f.vs[j] = v
 		}
 		f.n = m.Vec3{
@@ -59,11 +60,12 @@ func CreateModelFromSTL(fname string, pos m.Vec3, mat int) Model {
 			float64(solid.Triangles[i].Normal[1]) * 1,
 			float64(solid.Triangles[i].Normal[2]) * 1,
 		}
+		f.MaterialIndex = mod.MaterialIndex
 		faces[i] = f
 	}
 	mod.MaterialIndex = mat
 	mod.Faces = faces
-	mod.bvh.model = &mod
+	mod.meshBvh.model = &mod
 	//Vertices:      []mgl64.Vec3{},
 	return mod
 

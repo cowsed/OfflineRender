@@ -8,6 +8,13 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 )
 
+//Assorted helper functions
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func Mul3x3(a, b mgl64.Vec3) mgl64.Vec3 {
 	return mgl64.Vec3{
 		a[0] * b[0],

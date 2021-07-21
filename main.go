@@ -16,11 +16,11 @@ import (
 
 //Image and Renderring Settings
 const (
-	BlockSize      = 32
-	ImageWidth     = 1920 / 2
-	ImageHeight    = 1080 / 2
+	BlockSize      = 64
+	ImageWidth     = 1920 //1920 / 20
+	ImageHeight    = 1080 //1080 / 20
 	NumFrames      = 1
-	SamplePerPixel = 48 / 2
+	SamplePerPixel = 4
 )
 
 //Render Settings
@@ -29,7 +29,6 @@ const (
 	Gamma    = .5
 )
 
-//uv is [-1,1] and  [-1,1]
 func main() {
 	//Consistency across runs for easier debugging
 	rand.Seed(0)
@@ -38,16 +37,17 @@ func main() {
 	pprof.StartCPUProfile(l)
 
 	env := &HDRIEnv{
-		Filename: "TestResources/skylit_garage_1k.hdr",
-		Rotation: .8,
+		Filename: "TestResources/round_platform_4k.hdr",
+		Rotation: .2,
 		image:    &image.RGBA{},
 	}
 	env.LoadImg()
 
 	for Frame := 0; Frame < NumFrames; Frame++ {
 		initTime := time.Now()
-		fmt.Printf("Beginning Frame %d...", Frame)
-		//Time := float64(Frame) / float64(NumFrames)
+		fmt.Printf("Beginning Frame %d of %d...", Frame, NumFrames)
+
+		//Create Image
 		img := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
 
 		//Setup rendering things
@@ -59,6 +59,10 @@ func main() {
 		}
 		MainCam.Init()
 
+		//Scene Components
+		//===========================
+		//Initialize Materials
+		//====
 		materials := []Material{
 			//Silver
 			Metal{
@@ -83,10 +87,16 @@ func main() {
 				Albedo:      m.Vec3{.9, .9, .9},
 				Attenuation: .8,
 			},
+			//Floor 2
+			ShadowCatcher{
+				Attenuation: 1,
+			},
 		}
+		//Initialize Geometry
+		//====
 		model1 := CreateModelFromSTL("TestResources/cube.stl", m.Vec3{-0, -1, 2.2}, 2)
 		model1.Setup()
-		fmt.Println(model1.bvh.aabb)
+		fmt.Println(model1.meshBvh.aabb)
 
 		intersectors := []Intersector{
 			Sphere{
@@ -104,51 +114,40 @@ func main() {
 				Radius:        1,
 				MaterialIndex: 0,
 			},
-			//Sphere{
-			//	Center:        m.Vec3{0, 20000, 0},
-			//	Radius:        20000,
-			//	MaterialIndex: 3,
-			//},
+			Sphere{
+				Center:        m.Vec3{0, 20000, 0},
+				Radius:        20000,
+				MaterialIndex: 4,
+			},
 			model1,
 		}
 
+		//Create the actual scene
 		MainScene := Scene{
 			Env:       env,
 			Cam:       MainCam,
 			Geometry:  intersectors,
 			Materials: materials,
 		}
+		//Create BVH
+		//MainScene.CreateBVH()
+
+		//Render the scene
 		MakeImage(img, ImageWidth, ImageHeight, &MainScene)
 
+		//Save the Image
 		f, err := os.Create(fmt.Sprintf("Outputs/out%d.png", Frame))
 		check(err)
-
 		err = png.Encode(f, img)
 		check(err)
-
 		err = f.Close()
 		check(err)
+
+		//Timing
 		fmt.Println("Finished in", time.Since(initTime))
 	}
+	//Profiling
 	pprof.StopCPUProfile()
 	l.Close()
 
-	/*
-		f, err := os.Create("mem.pprof")
-		if err != nil {
-			log.Fatal("could not create memory profile: ", err)
-		}
-		defer f.Close() // error handling omitted for example
-		runtime.GC()    // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(f); err != nil {
-			log.Fatal("could not write memory profile: ", err)
-		}
-	*/
-}
-
-//Assorted helper functions
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
